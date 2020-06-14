@@ -1,9 +1,11 @@
 from __future__ import division
 
 import math
+import warnings
 
 import six
 from cryptography.hazmat.bindings.openssl.binding import Binding
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
 try:
     from ecdsa import SigningKey as EcdsaSigningKey, \
@@ -357,8 +359,14 @@ class CryptographyRSAKey(Key):
         return signature
 
     def verify(self, msg, sig):
+        if isinstance(self.prepared_key, RSAPrivateKey):
+            warnings.warn("Attempting to verify a message with a private key. "
+                          "This is not recommended.")
+            public_key = self.prepared_key.public_key()
+        else:
+            public_key = self.prepared_key
         try:
-            self.prepared_key.verify(
+            public_key.verify(
                 sig,
                 msg,
                 padding.PKCS1v15(),

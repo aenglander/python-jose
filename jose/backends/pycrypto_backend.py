@@ -18,7 +18,7 @@ from jose.backends.base import Key
 from jose.backends._asn1 import rsa_public_key_pkcs8_to_pkcs1
 from jose.utils import base64_to_long, long_to_base64
 from jose.constants import ALGORITHMS
-from jose.exceptions import JWKError, JWEError
+from jose.exceptions import JWKError, JWEError, JWEAlgorithmUnsupportedError
 from jose.utils import base64url_decode
 
 # We default to using PyCryptodome, however, if PyCrypto is installed, it is
@@ -28,6 +28,11 @@ if hasattr(RSA, 'RsaKey'):
     _RSAKey = RSA.RsaKey
 else:
     _RSAKey = RSA._RSAobj
+
+if not hasattr(AES, "MODE_GCM"):
+    # Pycrpto does not support GCM mode
+    for gcm_alg in ALGORITHMS.GCM:
+        ALGORITHMS.SUPPORTED.remove(gcm_alg)
 
 
 def get_random_bytes(num_bytes):
@@ -297,6 +302,9 @@ class AESKey(Key):
 
         self._algorithm = algorithm
         self._mode = self.MODES.get(self._algorithm)
+        if self._mode is None:
+            raise JWEAlgorithmUnsupportedError(
+                "AES Mode is not supported by cryptographic library")
 
         if algorithm in self.ALG_128 and len(key) != 16:
             raise JWKError("Key but be 128 bit for alg {}".format(algorithm))
@@ -322,9 +330,14 @@ class AESKey(Key):
         try:
             iv = get_random_bytes(AES.block_size)
             cipher = AES.new(self._key, self._mode, iv)
-            padded_plain_text = self._pad(AES.block_size, plain_text)
-            cipher_text = cipher.encrypt(padded_plain_text)
-            return iv, cipher_text, None
+            if self._mode == AES.MODE_CBC:
+                padded_plain_text = self._pad(AES.block_size, plain_text)
+                cipher_text = cipher.encrypt(padded_plain_text)
+                auth_tag = None
+            else:
+                cipher.update(aad)
+                cipher_text, auth_tag = cipher.encrypt_and_digest(plain_text)
+            return iv, cipher_text, auth_tag
         except Exception as e:
             raise JWEError(e)
 
@@ -335,8 +348,16 @@ class AESKey(Key):
 
         try:
             cipher = AES.new(self._key, self._mode, iv)
-            padded_plain_text = cipher.decrypt(cipher_text)
-            plain_text = self._unpad(padded_plain_text)
+            if self._mode == AES.MODE_CBC:
+                padded_plain_text = cipher.decrypt(cipher_text)
+                plain_text = self._unpad(padded_plain_text)
+            else:
+                cipher.update(aad)
+                try:
+                    plain_text = cipher.decrypt_and_verify(cipher_text, tag)
+                except ValueError:
+                    raise JWEError("Invalid JWE Auth Tag")
+
             return plain_text
         except Exception as e:
             raise JWEError(e)

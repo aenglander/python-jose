@@ -19,6 +19,7 @@ from jose.constants import ALGORITHMS
 from jose.exceptions import JWKError, JWEError
 from jose.utils import base64_to_long, long_to_base64
 
+ALGORITHMS.SUPPORTED.remove(ALGORITHMS.RSA_OAEP)  # RSA OAEP not supported
 
 LEGACY_INVALID_PKCS8_RSA_HEADER = binascii.unhexlify(
     "30"  # sequence

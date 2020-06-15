@@ -5,7 +5,7 @@ try:
     from jose.backends.cryptography_backend import CryptographyAESKey
 except ImportError:
     PyCryptoAESKey = CryptographyAESKey = None
-from jose.exceptions import JWEError
+from jose.exceptions import JWEError, JWEAlgorithmUnsupportedError
 from jose.constants import ALGORITHMS
 
 CRYPTO_BACKENDS = (
@@ -22,8 +22,8 @@ SUPPORTED_ALGORITHMS = ALGORITHMS.AES_PSEUDO
     reason="Multiple crypto backends not available for backend compatibility tests"
 )
 class TestBackendAesCompatibility(object):
-    @pytest.mark.parametrize("backend_encrypt", CRYPTO_BACKENDS)
     @pytest.mark.parametrize("backend_decrypt", CRYPTO_BACKENDS)
+    @pytest.mark.parametrize("backend_encrypt", CRYPTO_BACKENDS)
     @pytest.mark.parametrize("algorithm", SUPPORTED_ALGORITHMS)
     def test_encryption_parity(self, backend_encrypt, backend_decrypt, algorithm):
         if "128" in algorithm:
@@ -35,7 +35,6 @@ class TestBackendAesCompatibility(object):
 
         key_encrypt = backend_encrypt(key, algorithm)
         key_decrypt = backend_decrypt(key, algorithm)
-
         plain_text = b'test'
         aad = b"extra data" if "GCM" in algorithm else None
 

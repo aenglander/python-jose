@@ -48,3 +48,10 @@ class JWEInvalidAuth(JWEError):
     JWE string provided
     """
     pass
+
+
+class JWEAlgorithmUnsupportedError(JWEError):
+    """
+    The JWE algorithm is not supported by the backend
+    """
+    pass

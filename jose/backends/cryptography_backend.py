@@ -19,13 +19,14 @@ from jose.utils import base64_to_long, long_to_base64, base64url_decode, \
 from jose.constants import ALGORITHMS
 from jose.exceptions import JWKError, JWEError
 
-from cryptography.exceptions import InvalidSignature
+from cryptography.exceptions import InvalidSignature, InvalidTag
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization, hmac
 from cryptography.hazmat.primitives.asymmetric import ec, rsa, padding
 from cryptography.hazmat.primitives.asymmetric.utils import \
     decode_dss_signature, encode_dss_signature
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, aead, \
+    modes
 from cryptography.hazmat.primitives.padding import PKCS7
 from cryptography.hazmat.primitives.serialization import \
     load_pem_private_key, load_pem_public_key
@@ -529,18 +530,23 @@ class CryptographyAESKey(Key):
             return self._aes_key_wrap(plain_text)
 
         try:
-            padder = PKCS7(algorithms.AES.block_size).padder()
-            padded_data = padder.update(plain_text)
-            padded_data += padder.finalize()
-
             iv = get_random_bytes(algorithms.AES.block_size//8)
             mode = self._mode(iv)
-            cipher = Cipher(algorithms.AES(self._key), mode,
-                            backend=default_backend())
-            encryptor = cipher.encryptor()
-            cipher_text = encryptor.update(padded_data)
-            encryptor.finalize()
-            return iv, cipher_text, None
+            if mode.name == "GCM":
+                cipher = aead.AESGCM(self._key)
+                cipher_text_and_tag = cipher.encrypt(iv, plain_text, aad)
+                cipher_text = cipher_text_and_tag[:len(cipher_text_and_tag) - 16]
+                auth_tag = cipher_text_and_tag[-16:]
+            else:
+                cipher = Cipher(algorithms.AES(self._key), mode,
+                                backend=default_backend())
+                encryptor = cipher.encryptor()
+                padder = PKCS7(algorithms.AES.block_size).padder()
+                padded_data = padder.update(plain_text)
+                padded_data += padder.finalize()
+                cipher_text = encryptor.update(padded_data) + encryptor.finalize()
+                auth_tag = None
+            return iv, cipher_text, auth_tag
         except Exception as e:
             raise JWEError(e)
 
@@ -552,14 +558,25 @@ class CryptographyAESKey(Key):
         try:
             iv = six.ensure_binary(iv)
             mode = self._mode(iv)
-            cipher = Cipher(algorithms.AES(self._key), mode,
-                            backend=default_backend())
-            decryptor = cipher.decryptor()
-            padded_plain_text = decryptor.update(cipher_text)
-            padded_plain_text += decryptor.finalize()
-            unpadder = PKCS7(algorithms.AES.block_size).unpadder()
-            plain_text = unpadder.update(padded_plain_text)
-            plain_text += unpadder.finalize()
+            if mode.name == "GCM":
+                if tag is None:
+                    raise ValueError("tag cannot be None")
+                cipher = aead.AESGCM(self._key)
+                cipher_text_and_tag = cipher_text + tag
+                try:
+                    plain_text = cipher.decrypt(iv, cipher_text_and_tag, aad)
+                except InvalidTag:
+                    raise JWEError("Invalid JWE Auth Tag")
+            else:
+                cipher = Cipher(algorithms.AES(self._key), mode,
+                                backend=default_backend())
+                decryptor = cipher.decryptor()
+                padded_plain_text = decryptor.update(cipher_text)
+                padded_plain_text += decryptor.finalize()
+                unpadder = PKCS7(algorithms.AES.block_size).unpadder()
+                plain_text = unpadder.update(padded_plain_text)
+                plain_text += unpadder.finalize()
+
             return plain_text
         except Exception as e:
             raise JWEError(e)

@@ -245,12 +245,9 @@ def _decrypt_and_auth(cek_bytes, enc, cipher_text, iv, aad, auth_tag):
     else:
         raise NotImplementedError("enc {} is not implemented!".format(enc))
 
-    try:
-        plaintext = encryption_key.decrypt(cipher_text, iv, aad, auth_tag)
-        if auth_tag != auth_tag_check:
-            plaintext = None
-    except JWEError:
-        plaintext = None
+    plaintext = encryption_key.decrypt(cipher_text, iv, aad, auth_tag)
+    if auth_tag != auth_tag_check:
+        raise JWEError("Invalid JWE Auth Tag")
 
     return plaintext
 
@@ -396,7 +393,7 @@ def _encrypt_and_auth(key, alg, enc, zip, plaintext, aad):
         iv, ciphertext, tag = encryption_key.encrypt(plaintext, aad)
         auth_tag = _auth_tag(ciphertext, iv, aad, mac_key, key_len)
     elif enc in ALGORITHMS.GCM:
-        encryption_key = jwk.construct(cek_bytes, alg)
+        encryption_key = jwk.construct(cek_bytes, enc)
         iv, ciphertext, auth_tag = encryption_key.encrypt(plaintext, aad)
     else:
         raise NotImplementedError("enc {} is not implemented!".format(enc))
@@ -525,7 +522,7 @@ def _get_key_bytes_from_key(key):
 
 
 def _get_rsa_key_wrap_cek(enc, key):
-    """
+    """_get_rsa_key_wrap_cek
     Get the content encryption key for RSA key wrap
 
     Args:
@@ -550,14 +547,19 @@ def _get_random_cek_bytes_for_enc(enc):
     Returns:
         (bytes) random bytes for cek key
     """
-    if enc in (ALGORITHMS.A128CBC_HS256, ALGORITHMS.A128GCM):
-        cek_bytes = get_random_bytes(32)
-    elif enc in (ALGORITHMS.A192CBC_HS384, ALGORITHMS.A192GCM):
-        cek_bytes = get_random_bytes(48)
-    elif enc in (ALGORITHMS.A256CBC_HS512, ALGORITHMS.A256GCM):
-        cek_bytes = get_random_bytes(64)
+    if enc == ALGORITHMS.A128GCM:
+        num_bits = 128
+    elif enc == ALGORITHMS.A192GCM:
+        num_bits = 192
+    elif enc in (ALGORITHMS.A128CBC_HS256, ALGORITHMS.A256GCM):
+        num_bits = 256
+    elif enc == ALGORITHMS.A192CBC_HS384:
+        num_bits = 384
+    elif enc == ALGORITHMS.A256CBC_HS512:
+        num_bits = 512
     else:
         raise NotImplementedError("{} not supported".format(enc))
+    cek_bytes = get_random_bytes(num_bits // 8)
     return cek_bytes
 
 

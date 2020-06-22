@@ -6,7 +6,7 @@ import six
 import jose.backends
 from jose import jwe
 from jose.constants import ALGORITHMS, ZIPS
-from jose.exceptions import JWEParseError, JWEAlgorithmUnsupportedError
+from jose.exceptions import JWEParseError
 from jose.jwk import AESKey
 from jose.jwk import RSAKey
 from jose.utils import base64url_decode
@@ -214,81 +214,81 @@ class TestDecrypt(object):
 
     JWE_128_BIT_OCT_PACKAGES = (
         pytest.param(
-            b"eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0.FWUgqCHDyNE1h3JDdr0Xcu5L5bBmpdeD9ARY7nWI6WqwgTkd9jSWyQ.pipi1JvdyC5xhUpeSv062A.JGWrXZDi8k0kWvFjRFIqm4PPgEXhY1XTrI9ck5UwsLs.ADFsMOoG9hCfWKBCfwb2mg",
+            b"eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiQTEyOEtXIn0.n24LSLkqXdWX4YIaOj9dwlF-1t7hTytKdO5hqg3dQ24S6kIATishhA.JpEb2cELXXsKg8A2mIiZcQ.lbEuxBQPOy0osKUSjq_evT4GWB8U9EajBoe4HVLYb-U.9MTdcq_2zePAwKWdt2ORxQ",
             id="alg: A128KW, enc: A128CBC-HS256"
         ),
         pytest.param(
-            b"eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTkyQ0JDLUhTMzg0In0.6Q2A5mNASmztSzClkWP1wnd4xJeqwWLXSjZeX4Hsrv88lHfmvztzJW922w_bTbrR6IXf8sIy4Uk.j3mIgJzZiT_VQBTALj-7uA.Rg4WCyrX92hmHcFCrnb4pW1p0kPL7vwr_2vCXf14JqY.XJ7R2DJ4TsrP5aEO7YUb8PIp-biZd-Er",
+            b"eyJlbmMiOiJBMTkyQ0JDLUhTMzg0IiwiYWxnIjoiQTEyOEtXIn0.RxCzQYdCBk5KR89bLFaxXnMI02b2XjHll_fIALg92FDdvmBj84kMKRs3CYszqcLsEC5pZGji_cs.qItxFbHqLvUOU9-_kOldpQ.GEY1cC2jX2AZH5fBSr9JAuTNjL75oXLg_y_f5k5qrpI.dbx5ZSyhCdsR99uz3jlzdRBqq_bWr21V",
             id="alg: A128KW, enc: A192CBC-HS384"
         ),
         pytest.param(
-            b"eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIn0.Ip3Mi-KOCGlMpJtzrjXlkiV_2bIrZyfzPGQxqCqJz7002cln2Zl2-HFxO6AOpTZjMPnAEwYB3jbsVzes1dMRaAsz8Y7j6U6b.W5SPAPmqYDk4EhzbesYsdg.ghwIBO7RLfDwuwBdNIu1CSY7TofQqk9Qfoh-mj047HA.j1ClyE98XpccpSIhgSKcjX-EqmcTMck1kSMhEffWpvU",
+            b"eyJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwiYWxnIjoiQTEyOEtXIn0.ByJ5W2G8_vjD4Rl5kr6mYqiADET39cXvhhKQqTcu0OFFlBg8b5Auz1-n8LmPB-NF_4CTxd95RSn6Ykm5-CwYuRZ6plIh_VV_.YN9zjSsy0Hyq3yFR3RlKCw.9m3n0fZDmxxamWKoAvoyjCJtKJfLlc9U86tk5YgPz6Q.Mw30riFfQ7DbCe1pylfdN7XBhOnU58IG2g5i9-Stj7I",
             id="alg: A128KW, enc: A256CBC-HS512"
         ),
         pytest.param(
-            b"eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4R0NNIn0.p-Ql3KS3eLpCYayduLAJRFnlrDxmz-Xq.MtcOoO69-uLGt0ky.oxFJvn7ukxDxOrRF5mAw48LT0zEK8A.CwNht_Y8MJVreFHiK_-8Aw",
+            b"eyJlbmMiOiJBMTI4R0NNIiwiYWxnIjoiQTEyOEtXIn0.PYaHt_cEHDwdKnmYyjkCg7T1HKrAy97a.WuIrAs7jHSsXqf9A.7g_Qp6DlNVrPptVpmzFDJ_1VPljD5w.RJXqRwBMyik9V1p96r-zFQ",
             id="alg: A128KW, enc: A128GCM"
         ),
         pytest.param(
-            b"eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTkyR0NNIn0.ymZfpi2OXzZNDGQIRYIYZpEKSp9v0_IAuLs4WFcJh0w.PiPrjIBhijp-jRzJ.71t41FWCt8CevMb1STEAZgbyRJYRmg.cG3mcRX9GMyWDK9wy8C-5w",
+            b"eyJlbmMiOiJBMTkyR0NNIiwiYWxnIjoiQTEyOEtXIn0.4lzeEoXilgqxK5mQ4_hLBLEygUe8bVhVTKjZ9pKPezw.Xf0HU0KkMCXEjeau.vnK_Ec_lnrxENj0tE-eLyPX3UO3vrg.vjIWpB_TtA73v93E0I7JvQ",
             id="alg: A128KW, enc: A192GCM"
         ),
         pytest.param(
-            b"eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMjU2R0NNIn0.w3-MmOm9vYWdeivDaTg4VBaup2cJLK-FuDw-CtI0EzK710-5nehU0Q.itfVwUGOSA8uUy1l.4BUA8kHkLlGVQewn834kiWmh2dwFvA.uhPEhYVsKtrA86gVmA58fg",
+            b"eyJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiQTEyOEtXIn0.3PhAqtq7SE0CHpuhVhEViywAOn-w55vBvN1iGWKCn3-nioam-h-GIQ.4maA1p_t7_peTBZM.r60jOf8J5Y7lkFc8xBxtNl9yoC6jZA.SWPFQWHjLMzj0pq2CHJUBA",
             id="alg: A128KW, enc: A256GCM"
         ),
     )
 
     JWE_192_BIT_OCT_PACKAGES = (
         pytest.param(
-            b"eyJhbGciOiJBMTkyS1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0.VI6KHzm-7kZ9lzZVcPaGxGfcP653rRS0TeO-mx9tf8edfktAwVraCg.QClSFzlqjEj8wuVSa6d4vw.BO-5uYmzkB4KG-BrJJipuZ6tBKLiYcPzRtezvwoPiPQ.FYpFwhxI0frlN2mPL9Q4yw",
+            b"eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiQTE5MktXIn0.RAXHkAPR_VsfFC5JAB0j24t_GdWa9udWTZZ_L18KE-qi9Au95oK-VA.J4YETSJp_EuV4AP0tWGIpw.VktlsPA1yF51IDXVtkrkmgHqPahz5-MjwAjCP0j3_EA.5h57BdovPem9fmyx-UcURA",
             id="alg: A192KW, enc: A128CBC-HS256"
         ),
         pytest.param(
-            b"eyJhbGciOiJBMTkyS1ciLCJlbmMiOiJBMTkyQ0JDLUhTMzg0In0.zy-FQk4HBV8H4eOfPjLJNQCL25QxRlKqRN_oog4hkcKbNe4m-n00GkoJrPhbA2_zUaSmmA03Cd4.hpMhDE2TLyNJuYKapas58w.PRzPBH4nCFPXH7ZPxdduiRUS11L5KuTIGTEDiJF2UnM.myYzLhoj_EsmKprZCCNW1EnjZx0L5p6X",
+            b"eyJlbmMiOiJBMTkyQ0JDLUhTMzg0IiwiYWxnIjoiQTE5MktXIn0.Z2AmR2Y6viywyGDPPO92V5MJCwfULSRGmeSjV4VHqEnVyUE-AJhKety8Kw5dS_ydWVpZ0IGe4S0.Ny9jR93JsAigFdJXrcb1hQ.jwvtxfGZC3O6P8lBFUSb5OTRLFVje6Fo1H0X5F4uv1w.p14y3-XZHA3FiFSvXdbTsaFkylbwIKn3",
             id="alg: A192KW, enc: A192CBC-HS384"
         ),
         pytest.param(
-            b"eyJhbGciOiJBMTkyS1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0.sLZTEz1ekFy7Zc1GUR1Ov2haIc0B8IeOTv9nWWfzfG60yRVHGylCTg.JB9Qf8YbJbq7UneQQNvRHQ.Qe_DIeW3TfNPH-cZ63vE7Fg3rs_ducWB4jUDso3nL00.gMJK5_yzy2kMWpjhCeCxYw",
+            b"eyJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwiYWxnIjoiQTE5MktXIn0.wWChMcIkEaDfoMNfgsG1pomBzef0PYx_dJIe4V4JWeCS8RhH6_IzUb-zsgvyDUtKGeUHcwwQ66mpKnQO27-5p7cv6Geho9mq.5PcNZjsulZ3fTLu_NlQF2g.lXibtdYC3GsIiEtzkHqnOKu5uPrp6Fs8cdrakjZzQ4E.EuxTWElqFsG3lF4iJSGlzQKb3NXppEWQhWcpMOepjJE",
             id="alg: A192KW, enc: A256CBC-HS512"
         ),
         pytest.param(
-            b"eyJhbGciOiJBMTkyS1ciLCJlbmMiOiJBMTI4R0NNIn0.GFHC6pWUrMPS2Ne0LoD262ZRdDsuIHlm.5t-ctv43XznqPW3q.H86gDQWHbAFx0vQg5GnMmByzE62sXw.LsW7RR6rSuBLNQUKjXo3eQ",
+            b"eyJlbmMiOiJBMTI4R0NNIiwiYWxnIjoiQTE5MktXIn0.acwCCSF6htimS4JReQVQii4RDwq9HD5a.JMdpDaFlJMMjm_Cz.tEkn2o4ngBafL16ldPcdR0VWhphi2w.3GpPpXKYtbPKzE6kTLtKEA",
             id="alg: A192KW, enc: A128GCM"
         ),
         pytest.param(
-            b"eyJhbGciOiJBMTkyS1ciLCJlbmMiOiJBMTkyR0NNIn0.jCqGA0d0ZlJMh5zAC61xleR6GJVqkJdHd6Z_KYnOQCY.aBbG_wxdGR2v9xy-.iItzJTbtPO36_NkYryISCUg2yZLPqg.Czp7vQjkYY52L_-5e5Mftg",
+            b"eyJlbmMiOiJBMTkyR0NNIiwiYWxnIjoiQTE5MktXIn0.wXPSpLsBCaM0pBe9bFgUz-W0FLyAmGeRBI_VWD19rmU.XoiqwULpsnNvhwNo.sB3yhTbfBfWo7nbz8ZzLMX-RKzvrQw.Dn4XlsQpEjrf3mrjQ7sT5Q",
             id="alg: A192KW, enc: A192GCM"
         ),
         pytest.param(
-            b"eyJhbGciOiJBMTkyS1ciLCJlbmMiOiJBMjU2R0NNIn0.EIaUBHuqEgGsAofE0RIux_Z74KywMHwgJsWqzIh1d6y-ZlajLeFxZA.KucKNVKD7LkxK55G.SErdT9bgvEUd7BM24U7U2DY_iEpVsQ.LmnV18_JHi8b-K6-L3cMnQ",
+            b"eyJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiQTE5MktXIn0.DlGLalCXypefklVSenCRDRocRhHd3OI5vuAsxqTdDuVAks4PGbSkdw.zKpteENM-uElbKXK.cGvn4ozoLauLx-d7oEMJaLu-LttauA.1XOWJ6jZaxHWG13MUSPRAQ",
             id="alg: A192KW, enc: A256GCM"
         ),
     )
 
     JWE_256_BIT_OCT_PACKAGES = (
         pytest.param(
-            b"eyJhbGciOiJBMjU2S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0.eIyuHsu7hwSgBE9hEiCRFdDJNR8NxGLMZG_fXOAEwwxtKSS2aajNQw.0d0fDHcsSzNuKly5INWDsQ.biSkEEKmvCK6IXOhkOlardXzz_N_1bKQr3ej_YOq-Q0.lSvOacktoBx5bnJjTDPgkA",
+            b"eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiQTI1NktXIn0.XoNzh3DeJkShGkoZUlIHN6OHiA7ku5WzI_e9HvddWf-W6ygXfjiS8g.qUSQp7nyMReRRgGfw_VYmg.rrsoeZ_IecEkOAwOLyXWAo8uATnevhQJnIG4Gs-xUX8.05BaSh2pSaowV2omCOUdrw",
             id="alg: A256KW, enc: A128CBC-HS256"
         ),
         pytest.param(
-            b"eyJhbGciOiJBMjU2S1ciLCJlbmMiOiJBMTkyQ0JDLUhTMzg0In0.5n8sAMauHzLxaPvIcr785iQqxXs_-VhPWIvB_wwmHr8oIvWFAA4Bxr8yozJlignLYFp9hhTtqFg.WRsNeFZmHrWxxmHT0ERg9g.F3J8btCBslrfQWURF2yH0ylII1rF3JR2HrN1kGvz2x8.Hn8E8mgnjpFhFWQQAk_VpbT8kROw8Q1e",
+            b"eyJlbmMiOiJBMTkyQ0JDLUhTMzg0IiwiYWxnIjoiQTI1NktXIn0.b2-ui_1ksCzR28fUnBqtfwhKJZxklXboiN6AkhiDlOuj54lrn5CcHCjOOj_p5TwYWrFIEV3cQqw.zZqUrF5ygGZ27kPqWsx1bg.qAgz0LaznF_uyh4k37DesB0k5im-GwC9Au7l0dXVdhI.guaip_HKbIHbKZJCVXSKjcNv40w5aYZQ",
             id="alg: A256KW, enc: A192CBC-HS384"
         ),
         pytest.param(
-            b"eyJhbGciOiJBMjU2S1ciLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIn0.YbyodZkdjUg7rs-Un5AzgUqZuPo8brRD5Adgcz0IllKzv5C_Bo1XVHFQ2Yn7Scz-EapFNk_VTW_qfYeu6nAn6FaCQw56SOIR.T9F36c75q-R7FhX-SsLvWw.BK4HANOyq0jWRPdyr6qEcAdBGzPAfNkuQQmCV-w4iEI.YLzkW9d9fhaQbM2vw5m_GGHAbMQ3BZu7mX4lIUutf_4",
+            b"eyJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwiYWxnIjoiQTI1NktXIn0.325MvraC58qFxXdD1gjRMwM_1NTW1-517eOckhcWuDUeAEUm6AHM9y1UsyC3StCDgFzDWbIZe3fayLh7OqVilr31gdofBWI9.hN1R-yoBJzALfcVFUvdKkQ.n-bQyooo7ufWn1CETJ8YFy9BFGWNgggrgoDlhmGI_Y8.6VyiR7w1osq6T8_rR-BAvyKAWAQSSA3oEc4jOPO7iJw",
             id="alg: A256KW, enc: A256CBC-HS512"
         ),
         pytest.param(
-            b"eyJhbGciOiJBMjU2S1ciLCJlbmMiOiJBMTI4R0NNIn0.xswSGb-SCfbE6DjY0WCB1shloUPOBv2m._S5f-La7_N8FdZB6.cBQGJpjcs996pYnVtTpaLByJuH8LaA.uChcpwk-lyLfMMVBBy-iyg",
+            b"eyJlbmMiOiJBMTI4R0NNIiwiYWxnIjoiQTI1NktXIn0.d4wqGBFQG-MrzDgbWWB23o9LUgCkaTYt.NkFLhQfcR2swvLT3.lrt2LS9nrUqB9BDahJLqR-DZxutraA.MbghLfohCD71xfX8lRpVAw",
             id="alg: A256KW, enc: A128GCM"
         ),
         pytest.param(
-            b"eyJhbGciOiJBMjU2S1ciLCJlbmMiOiJBMTkyR0NNIn0.V0Nou9Zky4yo_9ghGF8hlxLfqzrLh8eplUDb6ZOqf48.xzy6RIznrhm4jKEn.gnGscbtj1t5YgvNLV5wzM49l6I0BuQ.xzFTdXEFrNT4ZCbeqiF5FA",
+            b"eyJlbmMiOiJBMTkyR0NNIiwiYWxnIjoiQTI1NktXIn0.XhgSqN16cCtwttRTxRXJfYx6FL9c56Bjo6VQx8E6vGI.C--W8_faFWiCxTCM.ZyTZRiqdLEMOnwQytgAujl-t6nZ-ZQ.GqyRs7YnGsGlwUehCXmllA",
             id="alg: A256KW, enc: A192GCM"
         ),
         pytest.param(
-            b"eyJhbGciOiJBMjU2S1ciLCJlbmMiOiJBMjU2R0NNIn0.s_kDN1X3i_JyNEd6UrQOol1OmBn6StkDgDCL4eUDENgrZADS34M_3g.DRjr32KpZgwvqwe5.0PoZ7b5H7fcSysmawuvVaxVqCcaOFw.P264dHQzuRHI_mu0A3yVAQ",
+            b"eyJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiQTI1NktXIn0.i_-ehDezyG89YFcWqU-MxPB1HtVHauEAUGInnjlodx44IJBLS4ap4Q.nCEooStwaMWLfDxt.lqjEVnCRHCaufTIcxT2MzeBwUE2V-Q.sIr7c2QlWIYSVwnXUHgITA",
             id="alg: A256KW, enc: A256GCM"
         ),
     )
@@ -304,23 +304,38 @@ class TestDecrypt(object):
         actual = jwe.decrypt(jwe_package, key)
         assert actual == b"Live long and prosper."
 
-    # @pytest.mark.parametrize("jwe_package", JWE_128_BIT_OCT_PACKAGES)
-    # def test_decrypt_oct_128_key_wrap(self, jwe_package):
-    #     key = OCT_128_BIT_KEY
-    #     actual = jwe.decrypt(jwe_package, key)
-    #     assert actual == b"Live long and prosper."
-    #
-    # @pytest.mark.parametrize("jwe_package", JWE_192_BIT_OCT_PACKAGES)
-    # def test_decrypt_oct_192_key_wrap(self, jwe_package):
-    #     key = OCT_192_BIT_KEY
-    #     actual = jwe.decrypt(jwe_package, key)
-    #     assert actual == b"Live long and prosper."
-    #
-    # @pytest.mark.parametrize("jwe_package", JWE_256_BIT_OCT_PACKAGES)
-    # def test_decrypt_oct_256_key_wrap(self, jwe_package):
-    #     key = OCT_256_BIT_KEY
-    #     actual = jwe.decrypt(jwe_package, key)
-    #     assert actual == b"Live long and prosper."
+    @pytest.mark.parametrize("jwe_package", JWE_128_BIT_OCT_PACKAGES)
+    def test_decrypt_oct_128_key_wrap(self, jwe_package):
+        key = OCT_128_BIT_KEY
+        headers = jwe.get_unverified_header(jwe_package)
+        if headers["alg"] not in ALGORITHMS.SUPPORTED:
+            pytest.skip("alg {} not supported".format(headers["alg"]))
+        if headers["enc"] not in ALGORITHMS.SUPPORTED:
+            pytest.skip("enc {} not supported".format(headers["enc"]))
+        actual = jwe.decrypt(jwe_package, key)
+        assert actual == b"Live long and prosper."
+
+    @pytest.mark.parametrize("jwe_package", JWE_192_BIT_OCT_PACKAGES)
+    def test_decrypt_oct_192_key_wrap(self, jwe_package):
+        headers = jwe.get_unverified_header(jwe_package)
+        if headers["alg"] not in ALGORITHMS.SUPPORTED:
+            pytest.skip("alg {} not supported".format(headers["alg"]))
+        if headers["enc"] not in ALGORITHMS.SUPPORTED:
+            pytest.skip("enc {} not supported".format(headers["enc"]))
+        key = OCT_192_BIT_KEY
+        actual = jwe.decrypt(jwe_package, key)
+        assert actual == b"Live long and prosper."
+
+    @pytest.mark.parametrize("jwe_package", JWE_256_BIT_OCT_PACKAGES)
+    def test_decrypt_oct_256_key_wrap(self, jwe_package):
+        headers = jwe.get_unverified_header(jwe_package)
+        if headers["alg"] not in ALGORITHMS.SUPPORTED:
+            pytest.skip("alg {} not supported".format(headers["alg"]))
+        if headers["enc"] not in ALGORITHMS.SUPPORTED:
+            pytest.skip("enc {} not supported".format(headers["enc"]))
+        key = OCT_256_BIT_KEY
+        actual = jwe.decrypt(jwe_package, key)
+        assert actual == b"Live long and prosper."
 
     def test_invalid_jwe_is_parse_error(self):
         with pytest.raises(JWEParseError):

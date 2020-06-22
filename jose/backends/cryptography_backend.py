@@ -6,6 +6,7 @@ import warnings
 import six
 from cryptography.hazmat.bindings.openssl.binding import Binding
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+from cryptography.hazmat.primitives.keywrap import aes_key_wrap, aes_key_unwrap, InvalidUnwrap
 
 try:
     from ecdsa import SigningKey as EcdsaSigningKey, \
@@ -13,11 +14,11 @@ try:
 except ImportError:
     EcdsaSigningKey = EcdsaVerifyingKey = None
 
-from jose.backends.base import Key
-from jose.utils import base64_to_long, long_to_base64, base64url_decode, \
+from .base import Key
+from ..utils import base64_to_long, long_to_base64, base64url_decode, \
     base64url_encode
-from jose.constants import ALGORITHMS
-from jose.exceptions import JWKError, JWEError
+from ..constants import ALGORITHMS
+from ..exceptions import JWKError, JWEError
 
 from cryptography.exceptions import InvalidSignature, InvalidTag
 from cryptography.hazmat.backends import default_backend
@@ -582,10 +583,15 @@ class CryptographyAESKey(Key):
             raise JWEError(e)
 
     def _aes_key_wrap(self, plain_text):
-        raise NotImplementedError("AES Key Wrap no implemented")
+        cipher_text = aes_key_wrap(self._key, plain_text, default_backend())
+        return None, cipher_text, None  # IV, cipher text, auth tag
 
     def _aes_key_unwrap(self, cipher_text):
-        raise NotImplementedError("AES Key Wrap not implemented")
+        try:
+            plain_text = aes_key_unwrap(self._key, cipher_text, default_backend())
+        except InvalidUnwrap as cause:
+            raise JWEError(cause)
+        return plain_text
 
 
 class CryptographyHMACKey(Key):

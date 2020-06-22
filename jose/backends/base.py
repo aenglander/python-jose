@@ -38,16 +38,15 @@ class Key(object):
 
     def decrypt(self, cipher_text, iv=None, aad=None, tag=None):
         """
-        :param cipher_text: Cipher text to decrypt
-        :type cipher_text: bytes
-        :param iv: IV if block mode
-        :type iv: bytes
-        :param aad: Additional Authenticated Data to verify if auth mode
-        :type aad: bytes
-        :param tag: Authentication tag if auth mode
-        :type tag: bytes
-        :return: Decrypted value
-        :rtype: bytes
+        Decrypt the cipher text and validate the auth tag if present
+        Args:
+            cipher_text (bytes): Cipher text to decrypt
+            iv (bytes): IV if block mode
+            aad (bytes): Additional Authenticated Data to verify if auth mode
+            tag (bytes): Authentication tag if auth mode
+
+        Returns:
+            bytes: Decrypted value
         """
         raise NotImplementedError()
 

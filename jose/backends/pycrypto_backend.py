@@ -1,4 +1,5 @@
 from base64 import b64encode
+from binascii import unhexlify
 
 import six
 import warnings
@@ -14,12 +15,12 @@ from Crypto.Cipher import PKCS1_v1_5 as PKCS1_v1_5_Cipher
 from Crypto.Cipher import PKCS1_OAEP, AES
 from Crypto.Util.asn1 import DerSequence
 
-from jose.backends.base import Key
-from jose.backends._asn1 import rsa_public_key_pkcs8_to_pkcs1
-from jose.utils import base64_to_long, long_to_base64
-from jose.constants import ALGORITHMS
-from jose.exceptions import JWKError, JWEError, JWEAlgorithmUnsupportedError
-from jose.utils import base64url_decode
+from .base import Key
+from ._asn1 import rsa_public_key_pkcs8_to_pkcs1
+from ..utils import base64_to_long, long_to_base64
+from ..constants import ALGORITHMS
+from ..exceptions import JWKError, JWEError, JWEAlgorithmUnsupportedError
+from ..utils import base64url_decode
 
 # We default to using PyCryptodome, however, if PyCrypto is installed, it is
 # used instead. This is so that environments that require the use of PyCrypto
@@ -279,9 +280,9 @@ class AESKey(Key):
         ALGORITHMS.A128CBC: AES.MODE_CBC,
         ALGORITHMS.A192CBC: AES.MODE_CBC,
         ALGORITHMS.A256CBC: AES.MODE_CBC,
-        ALGORITHMS.A128KW: None,
-        ALGORITHMS.A192KW: None,
-        ALGORITHMS.A256KW: None
+        ALGORITHMS.A128KW: AES.MODE_ECB,
+        ALGORITHMS.A192KW: AES.MODE_ECB,
+        ALGORITHMS.A256KW: AES.MODE_ECB
     }
     if hasattr(AES, "MODE_GCM"):
         #  pycrypto does not support GCM. pycryptdome does
@@ -362,18 +363,175 @@ class AESKey(Key):
         except Exception as e:
             raise JWEError(e)
 
+    DEFAULT_IV = unhexlify("A6A6A6A6A6A6A6A6")
+
     def _aes_key_wrap(self, plain_text):
-        raise NotImplementedError("AES Key Wrap not implemented")
+        # AES(K, W)     Encrypt W using the AES codebook with key K
+        def aes(k_, w_):
+            return AES.new(k_, AES.MODE_ECB).encrypt(w_)
+
+        # MSB(j, W)     Return the most significant j bits of W
+        msb = self._most_significant_bits
+
+        # LSB(j, W)     Return the least significant j bits of W
+        lsb = self._least_significant_bits
+
+        # B1 ^ B2       The bitwise exclusive or (XOR) of B1 and B2
+        # B1 | B2       Concatenate B1 and B2
+
+        # K             The key-encryption key K
+        k = self._key
+
+        # n             The number of 64-bit key data blocks
+        n = len(plain_text) // 8
+
+        # P[i]          The ith plaintext key data block
+        p = [None] + [plain_text[i*8:i*8+8] for i in range(n)]  # Split into 8 byte blocks and prepend the 0th item
+
+        # C[i]          The ith ciphertext data block
+        c = [None] + [None for _ in range(n)]  # Initialize c with n items and prepend the 0th item
+
+        # A             The 64-bit integrity check register
+        a = None
+
+        # R[i]          An array of 64-bit registers where
+        #                        i = 0, 1, 2, ..., n
+        r = [None] + [None for _ in range(n)]  # Initialize r with n items and prepend the 0th item
+
+        # A[t], R[i][t] The contents of registers A and R[i] after encryption
+        #                        step t.
+
+        # IV            The 64-bit initial value used during the wrapping
+        #                        process.
+        iv = self.DEFAULT_IV
+
+        # 1) Initialize variables.
+
+        # Set A = IV, an initial value
+        a = iv
+        # For i = 1 to n
+        for i in range(1, n + 1):
+            # R[i] = P[i]
+            r[i] = p[i]
+
+        # 2) Calculate intermediate values.
+        #  For j = 0 to 5
+        for j in range(6):
+            # For i=1 to n
+            for i in range(1, n + 1):
+                # B = AES(K, A | R[i])
+                b = aes(k, a + r[i])
+                # A = MSB(64, B) ^ t where t = (n*j)+i
+                t = (n * j) + i
+                a = msb(64, b)
+                a = a[:7] + six.int2byte(six.byte2int([a[7]]) ^ t)
+                # R[i] = LSB(64, B)
+                r[i] = lsb(64, b)
+
+        # 3) Output the results.
+        # Set C[0] = A
+        c[0] = a
+        # For i = 1 to n
+        for i in range(1, n + 1):
+            # C[i] = R[i]
+            c[i] = r[i]
+
+        cipher_text = b"".join(c)  # Join the chunks to return
+        return None, cipher_text, None  # IV, cipher text, auth tag
 
     def _aes_key_unwrap(self, cipher_text):
-        raise NotImplementedError("AES Key Wrap not implemented")
+        # AES-1(K, W)   Decrypt W using the AES codebook with key K
+        def aes_1(k_, w_):
+            return AES.new(k_, AES.MODE_ECB).decrypt(w_)
 
-    def _pad(self, block_size, unpadded):
+        # MSB(j, W)     Return the most significant j bits of W
+        msb = self._most_significant_bits
+
+        # LSB(j, W)     Return the least significant j bits of W
+        lsb = self._least_significant_bits
+
+        # B1 ^ B2       The bitwise exclusive or (XOR) of B1 and B2
+        # B1 | B2       Concatenate B1 and B2
+
+        # K             The key-encryption key K
+        k = self._key
+
+        # n             The number of 64-bit key data blocks
+        n = len(cipher_text) // 8 - 1
+
+        # P[i]          The ith plaintext key data block
+        p = [None] + [None] * n  # Initialize p with n items and prepend the 0th item
+
+        # C[i]          The ith ciphertext data block
+        c = [cipher_text[i*8:i*8+8] for i in range(n + 1)]  # Split ciphertext into 8 byte chunks
+
+        # A             The 64-bit integrity check register
+        a = None
+
+        # R[i]          An array of 64-bit registers where
+        #                        i = 0, 1, 2, ..., n
+        r = [None] + [None] * n  # Initialize r with n items and prepend the 0th item
+
+        # A[t], R[i][t] The contents of registers A and R[i] after encryption
+        #                        step t.
+
+        # 1) Initialize variables.
+        # Set A = C[0]
+        a = c[0]
+        # For i = 1 to n
+        for i in range(1, n + 1):
+            # R[i] = C[i]
+            r[i] = c[i]
+
+        # 2) Compute intermediate values.
+        # For j = 5 to 0
+        for j in range(5, -1, -1):
+            # For i = n to 1
+            for i in range(n, 0, -1):
+                # B = AES-1(K, (A ^ t) | R[i]) where t = n*j+i
+                t = n * j + i
+                a = a[:7] + six.int2byte(six.byte2int([a[7]]) ^ t)
+                b = aes_1(k, a + r[i])
+                # A = MSB(64, B)
+                a = msb(64, b)
+                # R[i] = LSB(64, B)
+                r[i] = lsb(64, b)
+
+        # 3) Output results.
+        # If A is an appropriate initial value (see 2.2.3),
+        if a == self.DEFAULT_IV:
+            # Then
+            # For i = 1 to n
+            for i in range(1, n + 1):
+                # P[i] = R[i]
+                p[i] = r[i]
+        # Else
+        else:
+            # Return an error
+            raise JWEError("Invalid AES Keywrap")
+
+        return b"".join(p[1:])  # Join the chunks and return
+
+    @staticmethod
+    def _most_significant_bits(number_of_bits, _bytes):
+        number_of_bytes = number_of_bits // 8
+        msb = _bytes[:number_of_bytes]
+        return msb
+
+    @staticmethod
+    def _least_significant_bits(number_of_bits, _bytes):
+        number_of_bytes = number_of_bits // 8
+        lsb = _bytes[-number_of_bytes:]
+        return lsb
+
+    @staticmethod
+    def _pad(block_size, unpadded):
         padding_bytes = block_size - len(unpadded) % block_size
         padding = bytes(bytearray([padding_bytes]) * padding_bytes)
         return unpadded + padding
 
-    def _unpad(self, padded):
+    @staticmethod
+    def _unpad(padded):
         padded = six.ensure_binary(padded)
         padding_byte = padded[-1]
         if isinstance(padded, six.string_types):

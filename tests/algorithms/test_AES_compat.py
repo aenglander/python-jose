@@ -13,7 +13,7 @@ CRYPTO_BACKENDS = (
     pytest.param(PyCryptoAESKey, id="pycrypto/dome"),
 )
 
-SUPPORTED_ALGORITHMS = ALGORITHMS.AES_PSEUDO
+SUPPORTED_ALGORITHMS = ALGORITHMS.AES_PSEUDO.union(ALGORITHMS.AES_KW)
 
 
 @pytest.mark.backend_compatibility
@@ -35,7 +35,7 @@ class TestBackendAesCompatibility(object):
 
         key_encrypt = backend_encrypt(key, algorithm)
         key_decrypt = backend_decrypt(key, algorithm)
-        plain_text = b'test'
+        plain_text = b"sixteen byte key" if "KW" in algorithm else b"test"
         aad = b"extra data" if "GCM" in algorithm else None
 
         iv, cipher_text, tag = key_encrypt.encrypt(plain_text, aad)
